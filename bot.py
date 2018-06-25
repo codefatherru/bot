@@ -4,6 +4,7 @@ import telebot
 from telebot import apihelper
 from telebot import types
 import shelve
+from SQLighter import SQLighter
 from config import shelve_name, database_name
 
 def set_user_state(chat_id, state):
@@ -57,20 +58,40 @@ bot = telebot.TeleBot(config.token)
 @bot.message_handler(commands=['create'])
 def handle_start_help(message):
     bot.send_message(message.chat.id, 'In the beginning you should describe your needs')
-    set_user_state(message.chat.id,1)    
+    set_user_state(message.chat.id,1)
+    repeat_all_messages(message)    
 
+@bot.message_handler(commands=['delete'])
+def handle_start_help(message):
+    state = get_state_for_user(message.chat.id)
+    if state:
+        finish_user_quest(message.chat.id)
+        bot.send_message(message.chat.id, 'finished')
+     
 
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message): # Название функции не играет никакой роли, в принципе
 
     state = get_state_for_user(message.chat.id)
+    print(message.chat.id)
+    print(state)
     if not state:
         bot.send_message(message.chat.id, 'Чтобы начать, выберите команду /create')
     else:
         #keyboard_hider = types.ReplyKeyboardRemove()
-        bot.send_message(message.chat.id, '{},{}'.format(state,message.text))
-        markup = generate_keyboard(['1','2'])
-        bot.send_message(message.chat.id, '?', reply_markup=markup)
+        db_worker = SQLighter(config.database_name)
+        q = db_worker.select_single(state)
+        if not q:
+            bot.send_message(message.chat.id, 'Хватит!')
+            return None
+        a = db_worker.select_answers(state)
+        #bot.send_message(message.chat.id, '{},{}'.format(state,q[1]))
+        list_items = []
+        for item in a:
+            list_items.append(item[2])
+        print(list_items)
+        markup = generate_keyboard(list_items)
+        bot.send_message(message.chat.id, '{},{}'.format(state,q[1]), reply_markup=markup)
         set_user_state(message.chat.id,state+1)
     
 
