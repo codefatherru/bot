@@ -102,7 +102,7 @@ def handle_start_help(message):
         u = db_worker.select_user(user.id)
         if not u:
             handle_me(message) #если не было такого юзера  - заведем 
-        q = db_worker.select_polls()
+        q = db_worker.select_polls(u[1])
         if not q:
             bot.send_message(message.chat.id, 'Опросов нет!')
             print('нет опросов!')
@@ -262,7 +262,7 @@ def repeat_all_messages(message): # Название функции не игр�
                 list_items.append(item[2])
             print(list_items)
             markup = generate_keyboard(list_items)
-            bot.send_message(message.chat.id, '{},{}'.format(state,quest[1]), reply_markup=markup)
+            bot.send_message(message.chat.id, '{}'.format(quest[1]), reply_markup=markup)
             
         
     

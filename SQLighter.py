@@ -9,7 +9,7 @@ class SQLighter:
     def select_user(self, rownum):
         """ Получаем одну строку с номером rownum """
         with self.connection:
-            return self.cursor.execute('SELECT * FROM user WHERE id = ?', (rownum,)).fetchone()
+            return self.cursor.execute('SELECT id, role_id, first_name  FROM user WHERE id = ?', (rownum,)).fetchone()
     def update_user(self, chat_id,role_id,id,is_bot,first_name,last_name = None,username = None,language_code = None):
         with self.connection:
             return self.cursor.execute('INSERT OR REPLACE INTO user(chat_id,role_id,id,is_bot,first_name,last_name,username,language_code) VALUES(?,?,?,?,?,?,?,?)', (chat_id,role_id,id,is_bot,first_name,last_name ,username,language_code))    
@@ -49,10 +49,10 @@ class SQLighter:
         """ Получаем одну строку с номером rownum """
         with self.connection:
             return self.cursor.execute('select * from p2q where poll_id=? order by sequence limit 1', (rownum,)).fetchone()
-    def select_polls(self):
+    def select_polls(self, role_id):
         """ Получаем одну строку с номером rownum """
         with self.connection:
-            return self.cursor.execute('SELECT * FROM poll ').fetchall()
+            return self.cursor.execute('SELECT * FROM poll where role_id =?', (role_id,)).fetchall()
 
     def count_rows(self):
         """ Считаем количество строк """
