@@ -85,7 +85,10 @@ apihelper.proxy = {'https':config.socks5}
 
 bot = telebot.TeleBot(config.token)
 
-#В диалоговом окне инженер вводит команду "Create purchase requisition"
+@bot.message_handler(commands=['help'])
+def handle_delete_help(message):
+    bot.send_message(message.chat.id, '/start - начать заново \n /stop - закончть опрос \n /buyer - сменить роль на "Закупщик"  \n /internal - сменить роль на "Внутренний клиент"')
+        
 @bot.message_handler(commands=['start'])
 def handle_start_help(message):
     state = get_state_for_user(message.chat.id)
