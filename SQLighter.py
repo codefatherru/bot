@@ -31,6 +31,7 @@ class SQLighter:
             return self.cursor.execute('SELECT * FROM option WHERE question_id = ?', (rownum,)).fetchall()
     def check_answer(self, question, title):
         """ Получаем одну строку с номером rownum """
+        #print(('select * from option where question_id = ? and title = ?', (question, title)))
         with self.connection:
             return self.cursor.execute('select * from option where question_id = ? and title = ?', (question, title)).fetchone()
     def select_poll(self, rownum):
