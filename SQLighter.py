@@ -6,7 +6,13 @@ class SQLighter:
     def __init__(self, database):
         self.connection = sqlite3.connect(database)
         self.cursor = self.connection.cursor()
-
+    def select_user(self, rownum):
+        """ Получаем одну строку с номером rownum """
+        with self.connection:
+            return self.cursor.execute('SELECT * FROM user WHERE id = ?', (rownum,)).fetchone()
+    def update_user(self, chat_id,role_id,id,is_bot,first_name,last_name = None,username = None,language_code = None):
+        with self.connection:
+            return self.cursor.execute('INSERT OR REPLACE INTO user(chat_id,role_id,id,is_bot,first_name,last_name,username,language_code) VALUES(?,?,?,?,?,?,?,?)', (chat_id,role_id,id,is_bot,first_name,last_name ,username,language_code))    
     def select_all(self):
         """ Получаем все строки """
         with self.connection:
@@ -15,7 +21,8 @@ class SQLighter:
     def select_single(self, rownum):
         """ Получаем одну строку с номером rownum """
         with self.connection:
-            return self.cursor.execute('SELECT * FROM question WHERE id = ?', (rownum,)).fetchone()
+            return self.cursor.execute('SELECT * FROM question WHERE id = ?', (rownum,)).fetchone()    
+
     def select_state(self, rownum):
         """ Получаем одну строку с номером rownum """
         with self.connection:

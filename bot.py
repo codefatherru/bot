@@ -89,10 +89,16 @@ bot = telebot.TeleBot(config.token)
 @bot.message_handler(commands=['start'])
 def handle_start_help(message):
     state = get_state_for_user(message.chat.id)
+    user = message.from_user
+    print(user)
     if not state:
         bot.send_message(message.chat.id, 'In the beginning you should describe your needs')
         set_user_state(message.chat.id,0)
         db_worker = SQLighter(config.database_name)
+        user = message.from_user
+        u = db_worker.select_user(user.id)
+        if not u:
+            handle_me(message) #если не было такого юзера  - заведем 
         q = db_worker.select_polls()
         if not q:
             bot.send_message(message.chat.id, 'Опросов нет!')
@@ -117,6 +123,18 @@ def handle_delete_help(message):
     if state:
         finish_user_quest(message.chat.id)
         bot.send_message(message.chat.id, 'finished')
+     
+
+@bot.message_handler(commands=['buyer', 'internal'])
+def handle_me(message):
+    user = message.from_user
+    print(user)
+    print(message.text)
+    role = 2 if message.text == '/buyer' else 1
+    db_worker = SQLighter(config.database_name)
+    db_worker.update_user(message.chat.id, role, user.id,user.is_bot,user.first_name,user.last_name,user.username,user.language_code)
+    bot.send_message(message.chat.id, 'welcome {} as a {}'.format(user.first_name,('buyer' if role == 2 else 'internal' )))
+    
      
 
      
@@ -165,6 +183,8 @@ def repeat_all_messages(message): # Название функции не игр�
                 finish_user_quest(message.chat.id)
                 finish_user_history(message.chat.id, q[1])
                 print(h)
+                #@todo надо использовать ссылки https://core.telegram.org/bots/api#inlinekeyboardmarkup
+                #@todo тут дикий ксотыль вместо пооиска по бд
                 rez1 = {
                 '1-3-11':'Please request free samples or technical specification in supplier. Would like to learn more about technical specification or free sample? See more information on the link below',
                 '1-3-12':'Please use the technical specification to describe your needs. Would like to learn more about technical specification? See more information on the link below. Download the free template of technical specification here',
