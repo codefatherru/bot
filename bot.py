@@ -102,6 +102,7 @@ def handle_start_help(message):
         u = db_worker.select_user(user.id)
         if not u:
             handle_me(message) #если не было такого юзера  - заведем 
+            u = db_worker.select_user(user.id)
         q = db_worker.select_polls(u[1])
         if not q:
             bot.send_message(message.chat.id, 'Опросов нет!')
