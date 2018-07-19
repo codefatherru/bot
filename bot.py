@@ -94,9 +94,13 @@ def handle_start_help(message):
     state = get_state_for_user(message.chat.id)
     user = message.from_user
     print(user)
+    print('обработчик старта получил сообщение')
+    print(message.text)
+    
     if not state:
-        bot.send_message(message.chat.id, 'Hello, friend ! I’m first purchasing bot who can help you with your concerns !')
-        bot.send_message(message.chat.id, 'Currently I can help you with purchase requisition, defining correct procurement strategy and negotiations strategy.')
+        if message.text=='/start': #на случай четкого начала, а не вызыова изнутри
+            bot.send_message(message.chat.id, 'Hello, friend ! I’m first purchasing bot who can help you with your concerns !')
+            bot.send_message(message.chat.id, 'Currently I can help you with purchase requisition, defining correct procurement strategy and negotiations strategy.')
         set_user_state(message.chat.id,0)
         db_worker = SQLighter(config.database_name)
         user = message.from_user
@@ -104,7 +108,7 @@ def handle_start_help(message):
         if not u:
             handle_me(message) #если не было такого юзера  - заведем 
             u = db_worker.select_user(user.id)
-        q = db_worker.select_polls(u[1])
+        q = db_worker.select_polls(1) #костыль по отмене ролей
         if not q:
             bot.send_message(message.chat.id, 'Опросов нет!')
             print('нет опросов!')
@@ -268,7 +272,8 @@ def repeat_all_messages(message): # Название функции не игр�
                 elif q[1] == 3:
                     print(rez3[h])
                     bot.send_message(message.chat.id, rez3[h], parse_mode='HTML')
-                bot.send_message(message.chat.id, 'опрос окончен')
+                bot.send_message(message.chat.id, 'Anything else we can help you with?')
+                handle_start_help(message)# обратно на приветствие 
             
         else:
             #bot.send_message(message.chat.id, 'не понимаю')
