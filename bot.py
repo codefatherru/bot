@@ -95,7 +95,8 @@ def handle_start_help(message):
     user = message.from_user
     print(user)
     if not state:
-        bot.send_message(message.chat.id, 'In the beginning you should describe your needs')
+        bot.send_message(message.chat.id, 'Hello, friend ! I’m first purchasing bot who can help you with your concerns !')
+        bot.send_message(message.chat.id, 'Currently I can help you with purchase requisition, defining correct procurement strategy and negotiations strategy.')
         set_user_state(message.chat.id,0)
         db_worker = SQLighter(config.database_name)
         user = message.from_user
@@ -112,10 +113,10 @@ def handle_start_help(message):
         for item in q:
             list_items.append(item[1])
         print('доступны опросы')
-        
+        list_items.append('No, thank you')
         print(list_items)
         markup = generate_keyboard(list_items)
-        bot.send_message(message.chat.id, 'Выберите опрос:', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Please choose the most applicable task you want to accomplish:', reply_markup=markup)
     else:
         bot.send_message(message.chat.id, 'не начинай заново!')
         
@@ -151,9 +152,26 @@ def repeat_all_messages(message): # Название функции не игр�
         
     print(message.chat.id)
     print(state)
-    if state == 0:
-        p = db_worker.select_poll(message.text)
+    if state == -1:#вариант для прощания
+        if message.text == 'No':
+            bot.send_message(message.chat.id, 'Great! Have a good day! Enjoy your supply chain ;)')
+            
+        else:
+            #bot.send_contact(message.chat.id, '+79601960087','Владислав Мандрыка')
+            bot.send_contact(message.chat.id, '+79648351664','Владислав Мандрыка')
+            
+        finish_user_quest(message.chat.id)
+    elif state == 0:#сразу после старта 
+        p = db_worker.select_poll(message.text) #должен быть выбран опрос
         if not p:
+            #print(message)
+            if message.text == 'No, thank you': #костыль для варианта завершения диалога
+                markup = generate_keyboard(['Yes','No'])
+                bot.send_message(message.chat.id, 'Ok....clear! Shall our purchasing expert help?', reply_markup=markup)
+                set_user_state(message.chat.id,-1)
+    
+                return None 
+            
             bot.send_message(message.chat.id, 'не узнаю опроса')
             print('не узнаю опроса')
             return None
