@@ -6,6 +6,7 @@ from telebot import types
 import shelve
 from SQLighter import SQLighter
 from config import shelve_name, database_name
+import time
 
 def set_user_state(chat_id, state):
     """
@@ -292,4 +293,21 @@ def repeat_all_messages(message): # Название функции не игр�
     
 
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    while True:
+
+        try:
+
+            bot.polling(none_stop=True)
+
+        # ConnectionError and ReadTimeout because of possible timout of the requests library
+
+        # TypeError for moviepy errors
+
+        # maybe there are others, therefore Exception
+
+        except Exception as e:
+
+            print(e)
+
+            time.sleep(15)
+ 
