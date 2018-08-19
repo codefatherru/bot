@@ -6,6 +6,7 @@ from telebot import types
 import shelve
 from SQLighter import SQLighter
 from config import shelve_name, database_name
+import time
 
 def set_user_state(chat_id, state):
     """
@@ -94,8 +95,13 @@ def handle_start_help(message):
     state = get_state_for_user(message.chat.id)
     user = message.from_user
     print(user)
+    print('обработчик старта получил сообщение')
+    print(message.text)
+    
     if not state:
-        bot.send_message(message.chat.id, 'In the beginning you should describe your needs')
+        if message.text=='/start': #на случай четкого начала, а не вызыова изнутри
+            bot.send_message(message.chat.id, 'Hello, friend ! I’m first purchasing bot who can help you with your concerns !')
+            bot.send_message(message.chat.id, 'Currently I can help you with purchase requisition, defining correct procurement strategy and negotiations strategy.')
         set_user_state(message.chat.id,0)
         db_worker = SQLighter(config.database_name)
         user = message.from_user
@@ -103,7 +109,7 @@ def handle_start_help(message):
         if not u:
             handle_me(message) #если не было такого юзера  - заведем 
             u = db_worker.select_user(user.id)
-        q = db_worker.select_polls(u[1])
+        q = db_worker.select_polls(1) #костыль по отмене ролей
         if not q:
             bot.send_message(message.chat.id, 'Опросов нет!')
             print('нет опросов!')
@@ -112,10 +118,10 @@ def handle_start_help(message):
         for item in q:
             list_items.append(item[1])
         print('доступны опросы')
-        
+        list_items.append('No, thank you')
         print(list_items)
         markup = generate_keyboard(list_items)
-        bot.send_message(message.chat.id, 'Выберите опрос:', reply_markup=markup)
+        bot.send_message(message.chat.id, 'Please choose the most applicable task you want to accomplish:', reply_markup=markup)
     else:
         bot.send_message(message.chat.id, 'не начинай заново!')
         
@@ -151,9 +157,26 @@ def repeat_all_messages(message): # Название функции не игр�
         
     print(message.chat.id)
     print(state)
-    if state == 0:
-        p = db_worker.select_poll(message.text)
+    if state == -1:#вариант для прощания
+        if message.text == 'No':
+            bot.send_message(message.chat.id, 'Great! Have a good day! Enjoy your supply chain ;)')
+            
+        else:
+            #bot.send_contact(message.chat.id, '+79601960087','Владислав Мандрыка')
+            bot.send_contact(message.chat.id, '+79648351664','Владислав Мандрыка')
+            
+        finish_user_quest(message.chat.id)
+    elif state == 0:#сразу после старта 
+        p = db_worker.select_poll(message.text) #должен быть выбран опрос
         if not p:
+            #print(message)
+            if message.text == 'No, thank you': #костыль для варианта завершения диалога
+                markup = generate_keyboard(['Yes','No'])
+                bot.send_message(message.chat.id, 'Ok....clear! Shall our purchasing expert help?', reply_markup=markup)
+                set_user_state(message.chat.id,-1)
+    
+                return None 
+            
             bot.send_message(message.chat.id, 'не узнаю опроса')
             print('не узнаю опроса')
             return None
@@ -163,7 +186,7 @@ def repeat_all_messages(message): # Название функции не игр�
         set_user_state(message.chat.id,q[0])
         repeat_all_messages(message)#@todo чтоб в цикл не ушло оставить только ИД чата
     elif not state:
-        bot.send_message(message.chat.id, 'Чтобы начать, выберите команду /start')
+        bot.send_message(message.chat.id, 'To start please use command /start')
     else:
         #keyboard_hider = types.ReplyKeyboardRemove()
         q = db_worker.select_state(state)
@@ -224,21 +247,21 @@ def repeat_all_messages(message): # Название функции не игр�
                 '2-10-12':'Please use the the functional specification to describe your needs. Would like to learn more about functional specification? See more information on the link below. Download the free template of functional specification here',
                 }
                 rez2 = {
-                '13-15':'Please use procurement outsourcing or joint purchases or volume consolidation as procurement strategy. Would you like to learn more about procurement outsourcing, joint purchases, volume consolidation? See more information on link below',
-                '13-16':'Please use request for information (RFI), request for quotation (RFQ), request for proposal (RFP) as procurement strategy. Also procurement outsourcing is applicable because of low volume. Would you like to learn more about request of information (RFI), request of quotation (RFQ), request of proposal (RFP)? See more information on link below. Download free template of RFQ, RFP, RFI here',
-                '13-17':'Please use request for bids (RFB) as procurement strategy.  Also procurement outsourcing is applicable because of low volume. Would you like to learn more about request for bids (RFB)? See more information on link below. Download free template of RFB here',
-                '14-15':'Please use value analysis and value engineering or standardisation or risk-management as procurement strategy. Would you like to learn more about value analysis and value engineering, standardisation, risk-management? See more information on link below',
-                '14-16':'Please use strategic alliances, joint spend management, savings sharing as a strategy. Would you like to learn more about strategic alliances, joint spend management, savings sharing? See more information on link below',
-                '14-17':'Please use global sourcing or reverse auction (tender) together with regression analysis and target pricing here as a strategy. Would you like to learn more about global sourcing, reverse auction (tender), regression analysis and target pricing ? See more information on link below',
+                '13-15':'Please use <strong>procurement outsourcing</strong> or <strong>joint purchases</strong> or <strong>volume consolidation</strong> as procurement strategy. Would you like to learn more about procurement outsourcing, joint purchases, volume consolidation? See more information on links below:<a href="https://mwpartners.bitrix24.ru/~Acz6s" target="_blank" class="external">Procurement outsourcing</a><a href="https://mwpartners.bitrix24.ru/~7Ze9t" target="_blank" class="external">Joint purchases</a><a href="https://mwpartners.bitrix24.ru/~x18gJ" target="_blank" class="external">Volume consolidation</a>',
+                '13-16':'Please use <strong>request for information (RFI) or request for proposal (RFP)</strong> as procurement strategy. Also <strong>procurement outsourcing</strong> is applicable because of low volume. Would you like to learn more about request of information (RFI) request of proposal (RFP)? See more information on links below:<a href="https://mwpartners.bitrix24.ru/~kbeyW" target="_blank" class="external">RFI and RFP </a> Download free template on links below: <a href="https://mwpartners.bitrix24.ru/~DBnU4" target="_blank" class="external">RFI-template</a> <a href="https://mwpartners.bitrix24.ru/~fqaIu" target="_blank" class="external">RFP-template</a>',
+                '13-17':'Please use <strong>global sourcing</strong> as procurement strategy. Also <strong>procurement outsourcing</strong> is applicable because of low volume. Would you like to learn more about global sourcing? See more information on links below:<a href="https://mwpartners.bitrix24.ru/~Acz6s" target="_blank" class="external">Procurement outsourcing</a> <a href="https://mwpartners.bitrix24.ru/~D7BXF" target="_blank" class="external">Global sourcing</a>',
+                '14-15':'Please use <strong>value analysis and value engineering or standardization or risk-management as procurement strategy. </strong>Would you like to learn more about value analysis and value engineering, standardisation, risk-management? See more information on links below: <a href="https://mwpartners.bitrix24.ru/~KRJ1R" target="_blank" class="external">Value analysis and value   engineering </a> <a href="https://mwpartners.bitrix24.ru/~YcW8F" target="_blank" class="external">Standardization</a> <a href="https://mwpartners.bitrix24.ru/~MUxUq" target="_blank" class="external">Risk-management</a>',
+                '14-16':'Please use <strong>strategic alliances, collaborative cost reduction, value based sourcing as a strategy</strong>. Would you like to learn more about <strong>strategic alliances, collaborative cost reduction, value based sourcing?</strong> See more information on links below<a href="https://mwpartners.bitrix24.ru/~6O1Ko" target="_blank" class="external">Strategic alliances</a> <a href="https://mwpartners.bitrix24.ru/~qq7H2" target="_blank" class="external">Collaborative   cost reduction 			</a> <a href="https://mwpartners.bitrix24.ru/~BRCT1" target="_blank" class="external">Value-based sourcing </a>',
+                '14-17':'Please use<strong> reverse auction (tender) together with regression analysis and target pricing</strong> here as a strategy. Would you like to learn more about<strong> reverse auction (tender), regression analysis and target pricing </strong>? See more information on links below: 		<a href="https://mwpartners.bitrix24.ru/~jXJud" target="_blank" class="external">Reverse auctions</a> 		<a href="https://mwpartners.bitrix24.ru/~SdN9O" target="_blank" class="external">Target pricing</a>',
                 }
                 
                 rez3 = {
-                '13-15':'"You should use ""Lose-Lose"" negotiation strategy.  This strategy involves the evading from participation in negotiations when you have a weak position. Would you like to learn more about ""Lose-Lose"" negotiation strategy? See more information on link below"',
-                '13-16':'"You should use ""Win-Lose"" negotiation strategy.  The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about ""Win-Lose"" negotiation strategy? See more information on link below"',
-                '13-17':'"You should use ""Win-Lose"" negotiation strategy.  The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about ""Win-Lose"" negotiation strategy? See more information on link below"',
-                '14-15':'"You should use ""Lose-Win"" negotiation strategy.  The implementation of adaptation strategies is appropriate, when the most important outcome for you are relations with you partner and result is not the most important. Would you like to learn more about ""Lose-Win"" negotiation strategy? See more information on link below"',
-                '14-16':'"You should use ""Win-Win"" negotiation strategy.  Cooperation strategy is moved for the mutual win in the negotiation process by expanding the pie based on the understanding of the parties\' interests. Would you like to learn more about ""Win-Win"" negotiation strategy? See more information on link below"',
-                '14-17':'"You should use ""Win-Lose"" negotiation strategy.  The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about ""Win-Lose"" negotiation strategy? See more information on link below"',
+                '13-15':'You should use <strong>"Lose-Lose"</strong> negotiation strategy. This strategy involves the evading from participation in negotiations when you have a weak position. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F" target="_blank" class="external">link below</a>',
+                '13-16':'You should use <strong>"Win-Lose"</strong> negotiation strategy. The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F" target="_blank" class="external">link below</a>',
+                '13-17':'You should use <strong>"Win-Lose"</strong> negotiation strategy. The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F" target="_blank" class="external">link below</a>',
+                '14-15':'You should use <strong>"Lose-Win"</strong> negotiation strategy. The implementation of adaptation strategies is appropriate, when the most important outcome for you are relations with you partner and result is not the most important. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F" target="_blank" class="external">link below</a>',
+                '14-16':'You should use <strong>"Win-Win"</strong> negotiation strategy. Cooperation strategy is moved for the mutual win in the negotiation process by expanding the pie based on the understanding of the parties\' interests. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F" target="_blank" class="external">link below</a>',
+                '14-17':'You should use <strong>"Win-Lose"</strong> negotiation strategy. The opponent is considered as a rival. The strategy is used when the most important outcome is result. Negotiator is focusing on rivalry, often ready to use all available tools to get the desired agreement, including the methods of manipulation. Would you like to learn more about effective negotiations? See more information on <a href="https://mwpartners.bitrix24.ru/~5sy0F">link below</a>',
                 }
                 if q[1] == 1:
                     print(rez1[h])
@@ -246,11 +269,12 @@ def repeat_all_messages(message): # Название функции не игр�
                     
                 elif q[1] == 2:
                     print(rez2[h])
-                    bot.send_message(message.chat.id, rez2[h])
+                    bot.send_message(message.chat.id, rez2[h], parse_mode='HTML')
                 elif q[1] == 3:
                     print(rez3[h])
-                    bot.send_message(message.chat.id, rez3[h])
-                bot.send_message(message.chat.id, 'опрос окончен')
+                    bot.send_message(message.chat.id, rez3[h], parse_mode='HTML')
+                bot.send_message(message.chat.id, 'Anything else we can help you with?')
+                handle_start_help(message)# обратно на приветствие 
             
         else:
             #bot.send_message(message.chat.id, 'не понимаю')
@@ -269,4 +293,21 @@ def repeat_all_messages(message): # Название функции не игр�
     
 
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    while True:
+
+        try:
+
+            bot.polling(none_stop=True)
+
+        # ConnectionError and ReadTimeout because of possible timout of the requests library
+
+        # TypeError for moviepy errors
+
+        # maybe there are others, therefore Exception
+
+        except Exception as e:
+
+            print(e)
+
+            time.sleep(15)
+ 
