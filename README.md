@@ -6,3 +6,5 @@ first implementation with Telegram https://groosha.gitbooks.io/telegram-bot-less
 pip install pyTelegramBotAPI
 pip install gunicorn 
 pip install PySocks
+
+pip install elasticsearch

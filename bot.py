@@ -8,6 +8,10 @@ from SQLighter import SQLighter
 from config import shelve_name, database_name
 import time
 
+from datetime import datetime
+from elasticsearch import Elasticsearch
+
+
 def set_user_state(chat_id, state):
     """
     Записываем юзера в игроки и запоминаем, что он должен ответить.
@@ -89,6 +93,18 @@ bot = telebot.TeleBot(config.token)
 @bot.message_handler(commands=['help'])
 def handle_delete_help(message):
     bot.send_message(message.chat.id, '/start - начать заново \n /stop - закончть опрос \n /buyer - сменить роль на "Закупщик"  \n /internal - сменить роль на "Внутренний клиент"')
+        
+@bot.message_handler(commands=['el'])
+def handle_delete_help(message):
+    bot.send_message(message.chat.id, 'ищем по эластику')
+    es = Elasticsearch(['https://telega_bot:kG5NQr4qmx6SiS7pWU6v@open-log.roseltorg.ru/zakupki_bot/'])
+    if es.ping():
+        print('Yay Connect')
+    else:
+        print('Awww it could not connect!')
+    res = es.search(index="44fz-not_prot_contract-2017", body={'fields': ['contract.suppliers.supplier.legalEntityRF.fullName'], 'query': {'match': {'contract.suppliers.supplier.legalEntityRF.fullName': 'а'}}})
+    for item in res['hits']['hits']:
+        print ('1')#"%s - %s - %s" % (item['_score'], item['fields']['eng'][0], item['fields']['rus'][0])
         
 @bot.message_handler(commands=['start'])
 def handle_start_help(message):
