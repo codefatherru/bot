@@ -96,16 +96,22 @@ def handle_delete_help(message):
         
 @bot.message_handler(commands=['el'])
 def handle_delete_help(message):
-    bot.send_message(message.chat.id, 'ищем по эластику')
+    sstr = message.text.replace('/el ', '')
+    bot.send_message(message.chat.id, 'ищем по всем свойствам "'+sstr+'"')
     es = Elasticsearch(['https://telega_bot:kG5NQr4qmx6SiS7pWU6v@open-log.roseltorg.ru/zakupki_bot/'])
     if es.ping():
         print('Yay Connect')
     else:
         print('Awww it could not connect!')
-    res = es.search(index="44fz-not_prot_contract-2017", body={'fields': ['contract.suppliers.supplier.legalEntityRF.fullName'], 'query': {'match': {'contract.suppliers.supplier.legalEntityRF.fullName': 'а'}}})
+    
+    res = es.search(index="44fz-not_prot_contract-2017", body={ 'query': {'match': {'contract.suppliers.supplier.legalEntityRF.fullName': sstr}}})
+    #print(res.build_search().to_dict())
     for item in res['hits']['hits']:
-        print ('1')#"%s - %s - %s" % (item['_score'], item['fields']['eng'][0], item['fields']['rus'][0])
-        
+        print ("%s - %s ИНН %s" % (item['_score'], item['_source']['contract']['suppliers']['supplier']['legalEntityRF']['fullName'], item['_source']['contract']['suppliers']['supplier']['legalEntityRF']['INN']))
+        bot.send_message(message.chat.id, "%s - %s ИНН %s" % (item['_score'], item['_source']['contract']['suppliers']['supplier']['legalEntityRF']['fullName'], item['_source']['contract']['suppliers']['supplier']['legalEntityRF']['INN']))
+    bot.send_message(message.chat.id,'закончили')
+
+
 @bot.message_handler(commands=['start'])
 def handle_start_help(message):
     state = get_state_for_user(message.chat.id)

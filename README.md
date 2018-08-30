@@ -8,3 +8,9 @@ pip install gunicorn
 pip install PySocks
 
 pip install elasticsearch
+
+как альтернатива, если пакеты не видны в разных консолях:
+py -3 -m pip install elasticsearch
+py -3 -m pip install pyTelegramBotAPI
+py -3 -m pip install gunicorn
+py -3 -m pip install PySocks
