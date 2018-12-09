@@ -78,9 +78,9 @@ def handle_start_help(message):
             date = day.find('span').get_text(strip=True)
             if date.count(' '):
                 date = date.split(' ')[0]
-            print(date)
+            #print(date)
             nday = now.replace(day=int(date))
-            print(now.date())
+            #print(now.date())
             date_c.append(nday.date())
     vl = pr.find('div',{'class':'values'})
     if vl:
@@ -89,7 +89,7 @@ def handle_start_help(message):
         for val in vals:
             max = val.find('div',{'class':'maxt'}).find('span').get_text(strip=True)
             min = val.find('div',{'class':'mint'}).find('span').get_text(strip=True)
-            print((min,max))
+            #print((min,max))
             min_c.append(int(min))
             max_c.append(int(max))
     data =  {'min': min_c, 'max': max_c, 'date':date_c}
@@ -113,7 +113,7 @@ def handle_start_help(message):
     plt.savefig(file, format='png', dpi=100)
     plt.clf()
     img = open(file, 'rb')
-    bot.send_photo(message.chat.id, img)
+    bot.send_photo(message.chat.id, img, title)
         
     
     
